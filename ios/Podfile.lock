@@ -1,0 +1,46 @@
+PODS:
+  - Flutter (1.0.0)
+  - flutter_sms (1.1.0):
+    - Flutter
+  - path_provider (0.0.1):
+    - Flutter
+  - telephony (0.0.1):
+    - Flutter
+  - url_launcher (0.0.1):
+    - Flutter
+  - workmanager (0.0.1):
+    - Flutter
+
+DEPENDENCIES:
+  - Flutter (from `Flutter`)
+  - flutter_sms (from `.symlinks/plugins/flutter_sms/ios`)
+  - path_provider (from `.symlinks/plugins/path_provider/ios`)
+  - telephony (from `.symlinks/plugins/telephony/ios`)
+  - url_launcher (from `.symlinks/plugins/url_launcher/ios`)
+  - workmanager (from `.symlinks/plugins/workmanager/ios`)
+
+EXTERNAL SOURCES:
+  Flutter:
+    :path: Flutter
+  flutter_sms:
+    :path: ".symlinks/plugins/flutter_sms/ios"
+  path_provider:
+    :path: ".symlinks/plugins/path_provider/ios"
+  telephony:
+    :path: ".symlinks/plugins/telephony/ios"
+  url_launcher:
+    :path: ".symlinks/plugins/url_launcher/ios"
+  workmanager:
+    :path: ".symlinks/plugins/workmanager/ios"
+
+SPEC CHECKSUMS:
+  Flutter: 434fef37c0980e73bb6479ef766c45957d4b510c
+  flutter_sms: 91ce41530f55c85d6524d82307a5d555844c086a
+  path_provider: abfe2b5c733d04e238b0d8691db0cfd63a27a93c
+  telephony: c41768fae9fb5495781b05a72004106ca33ec777
+  url_launcher: 6fef411d543ceb26efce54b05a0a40bfd74cbbef
+  workmanager: 0afdcf5628bbde6924c21af7836fed07b42e30e6
+
+PODFILE CHECKSUM: fe0e1ee7f3d1f7d00b11b474b62dd62134535aea
+
+COCOAPODS: 1.10.1
