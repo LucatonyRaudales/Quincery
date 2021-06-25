@@ -16,25 +16,7 @@ class HomeRepository {
     var res = await http.post(url);
   }
 
-  Future<Response> setMessage({String phone, String message}) async {
-    /*
-    [POST]
-      https://sms.aguacate.studio/api/SMS/helloMessage
-      { "Phone":"xxxx-xxxx", "Message":"xxxx", "Token": "2mBC92xBrVixmwzHJRPquFS9uUMnDb5YRwRYNfdC3bEQFxjXjmnX6JSe9CYzxvhz" }
-
-      desde ahí podés inyectar números al API
-      responde:  true / BadRequest + detalle del error
-    */
-
-    var url = Uri.parse(_urlBase + "helloMessage");
-    var res = await http
-        .post(url, body: {"Phone": phone, "Message": message, "Token": token});
-
-    return res;
-  }
-
-  Future<Response> getMessages({String password}) async {
-    Messages _messages = Messages();
+  Future<Response> getMessages({String token}) async {
     /*
     [HttpGet]
     https://sms.aguacate.studio/api/SMS/readMessages/
@@ -46,22 +28,13 @@ class HomeRepository {
     te va a mandar un límite de 10 mensajes para no mamar la consulta y no mamar el pool*/
 
     var url = Uri.parse(
-        "https://sms.aguacate.studio/api/SMS/readMessages?token=Z4U-VYY-6be-Rh5");
+        "https://sms.aguacate.studio/api/SMS/readMessages?token=$token");
     var res = await http.get(url);
+    print("respuesta del token: $token es: ${res.statusCode}");
     return res;
   }
 
-  Future<bool> changeStatusMessage({int id, bool status}) async {
-    /*
-    [HttpGet]
-    https://sms.aguacate.studio/api/SMS/readMessages/
-    Params: token = Z4U-VYY-6be-Rh5 o este otro LDP-yzq-PFt-Pvv
-    (esta es la contraseña que ponés en el teléfono y te mando dos)
-
-    recibís esto:
-    { "id": 1, "phone": "xxxxxxxx", "message": "xxxx" } 
-    te va a mandar un límite de 10 mensajes para no mamar la consulta y no mamar el pool*/
-
+  Future<bool> changeStatusMessage({int id, bool status, String token}) async {
     var url = Uri.parse(_urlBase + "statusMessage/");
     var res = await http.put(url,
         headers: {
@@ -71,11 +44,11 @@ class HomeRepository {
         body: json.encode({
           "Id": id.toString(),
           "Status": status.toString(),
-          "Token": "Z4U-VYY-6be-Rh5"
+          "Token": token
         }));
 
     print(
-        "ID message: $id actualizado con el status: $status respuesta:${res.statusCode}");
+        "ID message: $token actualizado con el status: $status respuesta:${res.statusCode}");
     return res.statusCode == 201;
   }
 
@@ -89,7 +62,8 @@ class HomeRepository {
   }
 
   Future<bool> haveKey() async {
-    bool have =  box.hasData("key");
+    bool have = box.hasData("key") && box.read("key") != "";
+    print("key: ${box.read("key")}");
     return have;
   }
 }

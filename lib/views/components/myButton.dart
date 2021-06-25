@@ -10,7 +10,8 @@ class MyButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RoundedLoadingButton(
-      child: Text('Iniciar more', style: TextStyle(color: Colors.white)),
+      color: Colors.blueGrey,
+      child: Text('Guardar', style: TextStyle(color: Colors.white)),
       controller: buttonController,
       onPressed: onPressed,
     );

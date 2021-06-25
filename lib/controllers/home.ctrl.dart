@@ -17,7 +17,7 @@ class MessageCtrl extends GetxController {
   final RoundedLoadingButtonController btnController =
       RoundedLoadingButtonController();
   bool permissionsGranted = false, isActive = false;
-  String myKey = "";
+  String token = "";
   @override
   void onInit() {
     validateKey();
@@ -28,7 +28,7 @@ class MessageCtrl extends GetxController {
     smsToSend = 0;
     bool have = await _homeRepository.haveKey();
     if (have) {
-      getKey();
+      await getKey();
       /*
     Workmanager().cancelAll();
     print("registrando");
@@ -58,19 +58,27 @@ class MessageCtrl extends GetxController {
   void saveKey() {
     _homeRepository.saveKey(key: message.key).then((value) {
       btnController.success();
-      Timer(Duration(seconds: 3), () => btnController.reset());
+      Timer(Duration(seconds: 3), () {
+        btnController.reset();
+        validateKey();
+      });
     });
   }
 
-  void getKey() {
+  Future getKey() {
     _homeRepository.getKey().then((value) {
-      message.key = value;
+      token = value;
+      print(token);
       update();
     });
+    return null;
   }
 
   void getSendAndSaveData() async {
-    var res = await _homeRepository.getMessages();
+    print("enviado token: $token");
+    smsToSend = 0;
+    lMs.messages.clear();
+    var res = await _homeRepository.getMessages(token: token);
     if (res.statusCode == 200) {
       isActive = true;
       var decode = json.decode(res.body);
@@ -78,7 +86,13 @@ class MessageCtrl extends GetxController {
       update();
       if (lMs.messages.isEmpty) return null;
       _sendSMS();
-    } else {
+    } else if(res.statusCode == 400){
+      isActive = true;
+      final snackBar = SnackBar(
+          backgroundColor: Colors.orangeAccent,
+          content: Text('¡CLAVE INCORRECTA!. ingresa una clave válida'));
+      ScaffoldMessenger.of(Get.context).showSnackBar(snackBar);
+    }else{
       isActive = false;
     }
     update();
@@ -93,16 +107,17 @@ class MessageCtrl extends GetxController {
       SmsMessage message = new SmsMessage(
           lMs.messages[smsToSend].phone, lMs.messages[smsToSend].message);
 
-      message.onStateChanged.timeout(Duration(seconds: 5),
+      message.onStateChanged.timeout(Duration(seconds: 15),
           onTimeout: (timeout) {
         timeout.close();
         print("mucho tiempo");
+         changeStatus(status: false, index: smsToSend);
       }).listen((state) async {
         print(state);
-        /*if (state == SmsMessageState.Sent) {
+        if (state == SmsMessageState.Sent) {
               print("SMS is sent!");
               changeStatus(status: true, index: smsToSend - 1);
-            }*/
+            }
 
         if (state == SmsMessageState.Fail) {
           print("falló");
@@ -110,18 +125,20 @@ class MessageCtrl extends GetxController {
         }
       }, onError: (err) {
         print("Error: $err");
-        changeStatus(status: true, index: smsToSend);
+        changeStatus(status: false, index: smsToSend);
       }, onDone: () {
-        print("bien hecho");
-        changeStatus(status: true, index: smsToSend);
+        print("on done, cambio de mensaje");
+        //changeStatus(status: true, index: smsToSend);
       }, cancelOnError: true);
       await sender.sendSms(message);
+    } else {
+      getSendAndSaveData();
     }
   }
 
   void changeStatus({bool status, int index}) async {
     await _homeRepository.changeStatusMessage(
-        id: lMs.messages[index].id, status: status);
+        id: lMs.messages[index].id, status: status, token: message.key);
     if (status) {
       lMs.messages[index].status = 1;
       smsSent++;
@@ -136,19 +153,14 @@ class MessageCtrl extends GetxController {
 }
 
 class Message {
-  Message({this.phone, this.message, this.token, this.key});
+  Message({this.phone, this.token, this.key});
 
   String phone;
-  String message;
   String token;
   String key;
 
-  factory Message.fromJson(Map<String, dynamic> json) => Message(
-      phone: json["Phone"],
-      message: json["Message"],
-      token: json["Token"],
-      key: json["key"]);
+  factory Message.fromJson(Map<String, dynamic> json) =>
+      Message(phone: json["Phone"], token: json["Token"], key: json["key"]);
 
-  Map<String, dynamic> toJson() =>
-      {"Phone": phone, "Message": message, "Token": token, "key": key};
+  Map<String, dynamic> toJson() => {"Phone": phone, "Token": token, "key": key};
 }
