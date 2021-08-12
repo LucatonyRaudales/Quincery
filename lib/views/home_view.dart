@@ -26,7 +26,7 @@ class _HomeViewState extends State<HomeView> {
         builder: (_ctrl) => Scaffold(
               appBar: AppBar(
                 centerTitle: true,
-                title: Text("Quincey App"),
+                title: Text("SMS Sender"),
                 actions: <Widget>[
                   Padding(
                       padding: EdgeInsets.only(right: 20.0),
