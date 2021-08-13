@@ -54,6 +54,9 @@ class HomeRepository {
 
   Future saveKey({String key}) async {
     print(key);
+    if (box.hasData("key")) {
+      box.remove('key');
+    }
     return box.write('key', key);
   }
 

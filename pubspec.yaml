@@ -15,9 +15,12 @@ dependencies:
   rounded_loading_button: ^2.0.4
   http: ^0.13.3
   workmanager: ^0.4.0
-  get_storage: ^2.0.2
+  get_storage: ^2.0.3
   sms_maintained: ^0.2.5
   get: ^4.1.4
+  background_sms: ^0.0.3
+  permission_handler: ^8.1.4+2
+  numberpicker: ^2.1.1
 
 dev_dependencies:
   flutter_test:

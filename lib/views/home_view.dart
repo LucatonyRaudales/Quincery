@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get_state_manager/get_state_manager.dart';
+import 'package:numberpicker/numberpicker.dart';
 import 'package:quincey_app/controllers/home.ctrl.dart';
 import 'package:workmanager/workmanager.dart';
 import 'components/myButton.dart';
@@ -38,7 +39,7 @@ class _HomeViewState extends State<HomeView> {
               ),
               body: SafeArea(
                   child: SingleChildScrollView(
-                    padding: EdgeInsets.symmetric(horizontal: 10),
+                padding: EdgeInsets.symmetric(horizontal: 10),
                 physics: ScrollPhysics(),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -73,7 +74,7 @@ class _HomeViewState extends State<HomeView> {
                                   color: Colors.grey[850],
                                   fontSize: 15,
                                   fontWeight: FontWeight.bold)),
-                        ))
+                        )),
                       ],
                     ),
                     SizedBox(height: 15),
@@ -83,6 +84,22 @@ class _HomeViewState extends State<HomeView> {
                             fontSize: 15,
                             fontWeight: FontWeight.w700)),
                     SizedBox(height: 15),
+
+                    Obx(() => new Text(
+                        "Consultar BS cada: ${_ctrl.secondsToCall.value} segundos.",
+                        style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold))),
+                    Obx(() => NumberPicker(
+                          axis: Axis.horizontal,
+                          value: _ctrl.secondsToCall.value,
+                          step: 10,
+                          minValue: 10,
+                          maxValue: 200,
+                          onChanged: (value) =>
+                              _ctrl.secondsToCall.value = value,
+                        )),
                     ExpansionTile(
                       title: Text(
                         "Editar clave",
@@ -119,7 +136,7 @@ class _HomeViewState extends State<HomeView> {
                         SizedBox(height: 15),
                       ],
                     ),
-                        SizedBox(height: 15),
+                    SizedBox(height: 15),
 
                     _ctrl.lMs.messages.isEmpty
                         ? new Text("No hay mensajes disponibles para el envío",
@@ -139,14 +156,15 @@ class _HomeViewState extends State<HomeView> {
                                         color: Colors.blueGrey[800],
                                         fontSize: 15,
                                         fontWeight: FontWeight.w700),
-                                        overflow: TextOverflow.ellipsis,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  subtitle:
-                                      new Text(_ctrl.lMs.messages[index].phone,
+                                  subtitle: new Text(
+                                    _ctrl.lMs.messages[index].phone,
                                     style: TextStyle(
                                         color: Colors.blueGrey[600],
                                         fontSize: 12,
-                                        fontWeight: FontWeight.w700),),
+                                        fontWeight: FontWeight.w700),
+                                  ),
                                   trailing: _ctrl.lMs.messages[index].status ==
                                           3
                                       ? SizedBox(

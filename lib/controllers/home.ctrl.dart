@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:background_sms/background_sms.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/get_state_manager.dart';
@@ -7,12 +8,14 @@ import 'package:quincey_app/models/messages.dart';
 import 'package:quincey_app/repository/Message.dart';
 import 'package:rounded_loading_button/rounded_loading_button.dart';
 import 'package:sms_maintained/sms.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class MessageCtrl extends GetxController {
   HomeRepository _homeRepository = new HomeRepository();
   Message message = new Message();
   SmsSender sender = new SmsSender();
   Messages lMs = new Messages(messages: []);
+  RxInt secondsToCall = 10.obs;
   int smsToSend = 0, smsSent = 0, smsFails = 0;
   final RoundedLoadingButtonController btnController =
       RoundedLoadingButtonController();
@@ -24,28 +27,27 @@ class MessageCtrl extends GetxController {
     super.onInit();
   }
 
+  _getPermission() async => await [
+        Permission.sms,
+      ].request();
+
+  Future<bool> _isPermissionGranted() async =>
+      await Permission.sms.status.isGranted;
+
+  Future<bool> get _supportCustomSim async =>
+      await BackgroundSms.isSupportCustomSim;
+
   void validateKey() async {
+    _getPermission();
+    bool permiso = await _isPermissionGranted();
+    print("hay permiso: $permiso");
+    bool customSIm = await _supportCustomSim;
+    print("hay custom: $customSIm");
+
     smsToSend = 0;
     bool have = await _homeRepository.haveKey();
     if (have) {
       await getKey();
-      /*
-    Workmanager().cancelAll();
-    print("registrando");
-    Workmanager().initialize(
-    callbackDispatcher, // The top level function, aka callbackDispatcher
-    isInDebugMode: true // If enabled it will post a notification whenever the task is running. Handy for debugging tasks
-    ).then((value)async{
-  await Workmanager().registerPeriodicTask(
-    "1",
-    "task1",
-    constraints: Constraints(
-        networkType: NetworkType.connected,
-    ),
-    initialDelay: Duration(seconds: 5),
-    frequency: Duration(minutes: 7));
-    });
-      */
       getSendAndSaveData();
     } else {
       final snackBar = SnackBar(
@@ -58,7 +60,7 @@ class MessageCtrl extends GetxController {
   void saveKey() {
     _homeRepository.saveKey(key: message.key).then((value) {
       btnController.success();
-      Timer(Duration(seconds: 3), () {
+      Timer(Duration(seconds: 1), () {
         btnController.reset();
         validateKey();
       });
@@ -84,15 +86,19 @@ class MessageCtrl extends GetxController {
       var decode = json.decode(res.body);
       lMs = Messages.fromJson(decode);
       update();
-      if (lMs.messages.isEmpty) return null;
+      if (lMs.messages.isEmpty) {
+        print("secondsToCall: $secondsToCall.value");
+        Timer(Duration(seconds: secondsToCall.value), () => getSendAndSaveData());
+        return null;
+      }
       _sendSMS();
-    } else if(res.statusCode == 400){
+    } else if (res.statusCode == 400) {
       isActive = true;
       final snackBar = SnackBar(
           backgroundColor: Colors.orangeAccent,
           content: Text('¡CLAVE INCORRECTA!. ingresa una clave válida'));
       ScaffoldMessenger.of(Get.context).showSnackBar(snackBar);
-    }else{
+    } else {
       isActive = false;
     }
     update();
@@ -103,35 +109,22 @@ class MessageCtrl extends GetxController {
       lMs.messages[smsToSend].status = 3;
       update();
 
-      print("pasa por aqui indx: $smsToSend");
       SmsMessage message = new SmsMessage(
           lMs.messages[smsToSend].phone, lMs.messages[smsToSend].message);
-
-      message.onStateChanged.timeout(Duration(seconds: 15),
-          onTimeout: (timeout) {
-        timeout.close();
-        print("mucho tiempo");
-         changeStatus(status: false, index: smsToSend);
-      }).listen((state) async {
-        print(state);
-        if (state == SmsMessageState.Sent) {
-              print("SMS is sent!");
-              changeStatus(status: true, index: smsToSend - 1);
-            }
-
-        if (state == SmsMessageState.Fail) {
-          print("falló");
-          changeStatus(status: false, index: smsToSend - 1);
-        }
-      }, onError: (err) {
-        print("Error: $err");
+      var result = await BackgroundSms.sendMessage(
+          phoneNumber: lMs.messages[smsToSend].phone,
+          message: lMs.messages[smsToSend].message,
+          simSlot: 0);
+      if (result == SmsStatus.sent) {
+        print("SMS is sent!");
+        changeStatus(status: true, index: smsToSend);
+      } else {
+        print("falló");
         changeStatus(status: false, index: smsToSend);
-      }, onDone: () {
-        print("on done, cambio de mensaje");
-        //changeStatus(status: true, index: smsToSend);
-      }, cancelOnError: true);
+      }
       await sender.sendSms(message);
     } else {
+      print("obteniendo data");
       getSendAndSaveData();
     }
   }
